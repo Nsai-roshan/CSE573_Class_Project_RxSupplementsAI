@@ -4,3 +4,5 @@ __pycache__/
 .env
 *.faiss
 *.pkl
+Code/v2/eval/reports/*
+!Code/v2/eval/reports/BASELINE_NOTES.md

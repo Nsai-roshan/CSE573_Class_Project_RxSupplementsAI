@@ -25,6 +25,7 @@ from .costing import CostLedger, load_prices
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MODELS_PATH = Path(__file__).resolve().parent / "config" / "models.yaml"
 load_dotenv(REPO_ROOT / ".env")
+_V1_EMBEDDER: Any | None = None
 
 
 @dataclass
@@ -36,6 +37,7 @@ class BaselineResult:
     model: str
     provider: str
     prompt: str
+    chunks: list[dict[str, Any]]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -45,6 +47,7 @@ class BaselineResult:
             "ledger": self.ledger.calls,
             "model": self.model,
             "provider": self.provider,
+            "chunks": self.chunks,
         }
 
 
@@ -87,7 +90,10 @@ def _tier_b_model(config: dict[str, Any], provider: str) -> str:
 
 def _retrieve_v1(question: str) -> dict[str, Any]:
     """Reproduce query_phi.py's FAISS top-3 plus BM25 top-2 retrieval."""
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    global _V1_EMBEDDER
+    if _V1_EMBEDDER is None:
+        _V1_EMBEDDER = SentenceTransformer("all-MiniLM-L6-v2")
+    model = _V1_EMBEDDER
     corpus = REPO_ROOT / "Data" / "CorpusData"
     with (corpus / "natmed_documents.json").open("r", encoding="utf-8") as handle:
         documents = json.load(handle)
@@ -98,9 +104,20 @@ def _retrieve_v1(question: str) -> dict[str, Any]:
     results = [documents[i] for i in indices[0]]
     context = ""
     citations: list[str] = []
+    chunks: list[dict[str, Any]] = []
     for result in results:
         context += result["id"] + ": " + result["text"] + "                     "
         citations.append(result["id"])
+        source_id = str(result["id"])
+        doc_id, _, chunk_index = source_id.rpartition("-")
+        chunks.append({
+            "chunk_id": f"{doc_id}:{chunk_index}" if chunk_index.isdigit() else source_id,
+            "doc_id": doc_id or source_id,
+            "text": result["text"],
+            "source": source_id,
+            "score": 0.0,
+            "origin": "dense",
+        })
 
     def tokenize(text: str) -> list[str]:
         return re.findall(r"\w+", text.lower())
@@ -114,10 +131,22 @@ def _retrieve_v1(question: str) -> dict[str, Any]:
     for index_value in top_indices:
         context += str(passages[index_value]) + "                   "
         citations.append(str(passages[index_value]).split(":", 1)[0])
+        passage = str(passages[index_value])
+        source, _, text = passage.partition(":")
+        doc_id, _, chunk_index = source.rpartition("-")
+        chunks.append({
+            "chunk_id": f"{doc_id}:{chunk_index}" if chunk_index.isdigit() else source,
+            "doc_id": doc_id or source,
+            "text": text,
+            "source": source,
+            "score": float(scores[index_value]),
+            "origin": "bm25",
+        })
 
     return {
         "context": re.sub(r"\([\d,\s]+\)", "", context),
         "citations": citations,
+        "chunks": chunks,
     }
 
 
@@ -209,6 +238,7 @@ def baseline_answer(
         model=selected_model,
         provider=selected_provider,
         prompt=prompt,
+        chunks=list(retrieved.get("chunks", [])),
     )
 
 
