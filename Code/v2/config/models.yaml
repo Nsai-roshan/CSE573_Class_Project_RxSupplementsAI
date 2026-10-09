@@ -14,10 +14,10 @@ providers:
     api_key_env: GROQ_API_KEY
 
 # Active defaults. Provider-specific alternatives are listed below.
-tier_a: llama-3.1-8b-instant
-tier_b: llama-3.3-70b-versatile
-router_model: llama-3.1-8b-instant
-verifier_model: llama-3.3-70b-versatile
+tier_a: openai/gpt-oss-20b
+tier_b: openai/gpt-oss-120b
+router_model: openai/gpt-oss-20b
+verifier_model: openai/gpt-oss-120b
 
 model_sets:
   ollama:
@@ -31,8 +31,7 @@ model_sets:
     router_model: gpt-4o-mini
     verifier_model: gpt-4o
   groq:
-    tier_a: llama-3.1-8b-instant
-    tier_b: llama-3.3-70b-versatile
-    router_model: llama-3.1-8b-instant
-    verifier_model: llama-3.3-70b-versatile
-
+    tier_a: openai/gpt-oss-20b
+    tier_b: openai/gpt-oss-120b
+    router_model: openai/gpt-oss-20b
+    verifier_model: openai/gpt-oss-120b

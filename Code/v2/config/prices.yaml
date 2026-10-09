@@ -12,12 +12,11 @@ prices:
   gpt-4o:
     input_per_1k: 0.0025
     output_per_1k: 0.01
-  llama-3.1-8b-instant:
-    input_per_1k: 0.00005
-    output_per_1k: 0.00008
-  llama-3.3-70b-versatile:
-    input_per_1k: 0.00059
-    output_per_1k: 0.00079
+  # Deprecated: Groq moved the Llama models to enterprise-only pricing on
+  # 2026-08-26; the self-serve GPT-OSS models are used instead.
   openai/gpt-oss-20b:
     input_per_1k: 0.000075
     output_per_1k: 0.0003
+  openai/gpt-oss-120b:
+    input_per_1k: 0.00015
+    output_per_1k: 0.0006
