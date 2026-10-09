@@ -1,0 +1,18 @@
+You are regenerating a grounded answer.
+
+Original question:
+{question}
+
+Retrieved chunks:
+{chunks}
+
+Previous draft:
+{previous_draft}
+
+Unsupported claims and reasons:
+{unsupported_claims}
+
+Fix or drop every unsupported claim. Use only the retrieved chunks and answer the
+original question. Every remaining factual sentence must cite an allowed chunk ID.
+If the context does not support an answer, say you don't know. Return JSON with
+answer and claims, where claims contain claim and citation_ids.

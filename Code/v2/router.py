@@ -12,6 +12,8 @@ from typing import Any
 import yaml
 from dotenv import load_dotenv
 
+from .costing import CostLedger
+
 
 LOGGER = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -77,6 +79,7 @@ class Router:
         provider: str | None = None,
         config_path: str | Path = CONFIG_PATH,
         prompt_path: str | Path = PROMPT_PATH,
+        ledger: CostLedger | None = None,
     ) -> None:
         self.config = _load_config(config_path)
         configured = _resolve_env(self.config.get("LLM_PROVIDER", "groq"))
@@ -95,6 +98,7 @@ class Router:
         )
         self.prompt_template = Path(prompt_path).read_text(encoding="utf-8")
         self.client = client or _make_client(self.config, self.provider)
+        self.ledger = ledger
 
     def classify(self, question: str) -> RouterDecision:
         prompt = self.prompt_template.format(question=question)
@@ -105,6 +109,8 @@ class Router:
             response_format={"type": "json_object"},
         )
         payload = json.loads(response.choices[0].message.content)
+        if self.ledger is not None:
+            self.ledger.record_text(self.router_model, prompt, response.choices[0].message.content)
         label = str(payload.get("label", "COMPLEX")).upper()
         if label not in {"SIMPLE", "COMPLEX"}:
             raise ValueError(f"Invalid router label: {label}")
@@ -118,4 +124,3 @@ class Router:
             tier,
         )
         return RouterDecision(label, confidence, tier, self.router_model)
-

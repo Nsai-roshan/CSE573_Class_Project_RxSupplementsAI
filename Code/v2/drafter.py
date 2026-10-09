@@ -119,13 +119,17 @@ class Drafter:
         lines = [f"{item['source']}: {item['text']}" for item in retrieval]
         return " ".join(lines), allowed
 
-    def draft(self, question: str, retrieval: Any, tier: str) -> DraftResult:
+    def draft(
+        self,
+        question: str,
+        retrieval: Any,
+        tier: str,
+        prompt_override: str | None = None,
+    ) -> DraftResult:
         model = self._model_for_tier(tier)
         context, allowed_ids = self._context(retrieval)
-        prompt = self.prompt_template.format(
-            allowed_chunk_ids=json.dumps(allowed_ids),
-            context=context,
-            question=question,
+        prompt = prompt_override or self.prompt_template.format(
+            allowed_chunk_ids=json.dumps(allowed_ids), context=context, question=question
         )
         response = self.client.chat.completions.create(
             model=model,
