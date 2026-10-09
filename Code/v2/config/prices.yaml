@@ -18,4 +18,6 @@ prices:
   llama-3.3-70b-versatile:
     input_per_1k: 0.00059
     output_per_1k: 0.00079
-
+  openai/gpt-oss-20b:
+    input_per_1k: 0.000075
+    output_per_1k: 0.0003
