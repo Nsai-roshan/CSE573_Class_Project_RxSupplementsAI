@@ -1,0 +1,21 @@
+# USD per 1K input/output tokens. Local Ollama models have no API charge.
+prices:
+  mistral:7b:
+    input_per_1k: 0.0
+    output_per_1k: 0.0
+  llama3.1:70b:
+    input_per_1k: 0.0
+    output_per_1k: 0.0
+  gpt-4o-mini:
+    input_per_1k: 0.00015
+    output_per_1k: 0.0006
+  gpt-4o:
+    input_per_1k: 0.0025
+    output_per_1k: 0.01
+  llama-3.1-8b-instant:
+    input_per_1k: 0.00005
+    output_per_1k: 0.00008
+  llama-3.3-70b-versatile:
+    input_per_1k: 0.00059
+    output_per_1k: 0.00079
+

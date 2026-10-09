@@ -1,0 +1,38 @@
+# Provider and model configuration for the v2 pipeline.
+# Environment interpolation is resolved by the v2 configuration loader.
+LLM_PROVIDER: ${LLM_PROVIDER:-groq}
+
+providers:
+  ollama:
+    base_url: ${OLLAMA_BASE_URL:-http://localhost:11434}
+    api_key_env: null
+  openai:
+    base_url: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+    api_key_env: OPENAI_API_KEY
+  groq:
+    base_url: https://api.groq.com/openai/v1
+    api_key_env: GROQ_API_KEY
+
+# Active defaults. Provider-specific alternatives are listed below.
+tier_a: llama-3.1-8b-instant
+tier_b: llama-3.3-70b-versatile
+router_model: llama-3.1-8b-instant
+verifier_model: llama-3.3-70b-versatile
+
+model_sets:
+  ollama:
+    tier_a: mistral:7b
+    tier_b: llama3.1:70b
+    router_model: mistral:7b
+    verifier_model: llama3.1:70b
+  openai:
+    tier_a: gpt-4o-mini
+    tier_b: gpt-4o
+    router_model: gpt-4o-mini
+    verifier_model: gpt-4o
+  groq:
+    tier_a: llama-3.1-8b-instant
+    tier_b: llama-3.3-70b-versatile
+    router_model: llama-3.1-8b-instant
+    verifier_model: llama-3.3-70b-versatile
+

@@ -1,4 +1,3 @@
-
 PRD: Multi-Agent RAG Platform with Automated Hallucination Evaluation
 v2 extension of RxSupplementsAI (CSE 573 Group 21)
 Base repo (fork this): KavJaggar/CSE573_Class_Project_RxSupplementsAI
@@ -14,9 +13,7 @@ agent that checks it against retrieved sources before it reaches the user, a
 complexity router sends simple questions to a cheap model tier and hard ones
 to a strong tier, and an automated eval harness scores groundedness and
 citation accuracy as a CI gate on every commit.
-
 The build must reproduce, by measurement, the results stated on the resume:
-
 Multi-agent RAG answering from the existing 30,566-document supplement store.
 Verification agent checking every draft against retrieved source material.
 Hallucination rate reduced 40% against the measured v1 baseline.
@@ -24,55 +21,30 @@ Average query cost reduced 35% via complexity-based routing.
 Eval harness scoring groundedness and citation accuracy on every commit.
 2. What already exists (do not rebuild)
 Inventory Codex must read first (Code/, Data/, Evaluation/):
-
 Exists
-
 Location
-
 v2 reuses as
-
 FAISS index + doc store (30,566 docs)
-
 Data/CorpusData/natmed_documents.json, natmed_data.faiss
-
 retrieval corpus, unchanged
-
 BM25 index
-
 Data/CorpusData/bm25_index.pkl, Code/BM25_corpus.py
-
 keyword retrieval, unchanged
-
 v1 query pipeline (Flask, FAISS top-3 + BM25 top-2 → Mistral via Ollama, streaming)
-
 Code/query_phi.py
-
 the frozen baseline — extract, don't modify
-
 KG generation scripts + KG data
-
 Code/create_kg.py, Code/KG_relationship_generation.py, Data/KnowledgeGraphData/
-
 wire into v2 retriever (v1 leaves the KG block as an empty stub)
-
 50 curated eval questions
-
 Evaluation/evaluationquestions.txt
-
 seed of the golden set
-
 Batch test runner + prior results
-
 Code/test_responses.py, Evaluation/TestResponses*.json
-
 reference; superseded by eval/ harness
-
 React frontend
-
 Code/WebApp
-
 untouched in v2
-
 3. Non-goals
 No changes to v1 behavior: Code/query_phi.py stays byte-identical as the
   measured baseline. All v2 code lives in Code/v2/.
@@ -81,43 +53,24 @@ No fine-tuning in v2. Model tiers are off-the-shelf (Ollama local or API).
 No new corpus ingestion: the 30,566 supplement docs are the document store.
 4. Success criteria
 ID
-
 Criterion
-
 How it is measured
-
 SC-1
-
 ≥40% relative reduction in hallucination rate vs v1 baseline
-
 eval report: (H_v1 − H_v2) / H_v1 ≥ 0.40 on frozen golden set
-
 SC-2
-
 ≥35% relative reduction in average cost per query vs v1
-
 eval report: (C_v1 − C_v2) / C_v1 ≥ 0.35, tokens × price table
-
 SC-3
-
 100% of v2 answers carry citations; every served answer passed the verifier or the explicit abstention path
-
 integration tests + served-answer log audit
-
 SC-4
-
 Eval harness runs in CI on every push; push fails if hallucination rate regresses >2 pts or citation precision drops >2 pts vs main
-
 GitHub Actions workflow
-
 SC-5
-
 p95 end-to-end latency < 60s on the v2 pipeline (local models)
-
 load script, 50 sequential queries
-
 Definitions (frozen before any benchmark run):
-
 Hallucination rate = fraction of answers containing ≥1 atomic claim not
   entailed by the retrieved source chunks, judged by the verifier model at
   temperature 0, with a 10% human spot-check.
@@ -155,7 +108,6 @@ User question ──▶ Code/v2/router.py ──▶ SIMPLE|COMPLEX → Tier A | 
 All v2 agents are LangGraph nodes sharing a typed AnswerState
 (question, tier, chunks, draft, claims, verdicts, cost ledger, latency).
 v1's Flask app is untouched; v2 serves on FastAPI (default :8182).
-
 6. Functional requirements
 6.1 Phase-0 groundwork
 FR-0.1: Fork the base repo to your account. All v2 code under Code/v2/;
@@ -163,8 +115,10 @@ FR-0.1: Fork the base repo to your account. All v2 code under Code/v2/;
 FR-0.2: Replace the hardcoded Ollama LAN IP in v1-derived code with
   OLLAMA_BASE_URL env (default http://localhost:11434); .env.example.
 FR-0.3: Code/v2/config/ — models.yaml (tier_a, tier_b, router_model,
-  verifier_model, LLM_PROVIDER=ollama|openai), prices.yaml (per-1K-token
-  in/out prices), eval.yaml (golden path, CI subset 20, thresholds 2.0).
+  verifier_model, LLM_PROVIDER=ollama|openai|groq; Groq uses its
+  OpenAI-compatible endpoint https://api.groq.com/openai/v1),
+  prices.yaml (per-1K-token in/out prices), eval.yaml (golden path,
+  CI subset 20, thresholds 2.0).
 6.2 Baseline extraction (Code/v2/baseline.py)
 FR-2.1: Extract v1's exact retrieval+generation behavior
   (FAISS top-3 + BM25 top-2, single Mistral call, citations requested) into a
@@ -184,7 +138,9 @@ FR-4.1: Few-shot classifier (cheap model, temp 0) → SIMPLE (single-fact
   lookup, definition, dosage) or COMPLEX (interactions, multi-hop, comparison,
   safety synthesis); log label + confidence.
 FR-4.2: SIMPLE → Tier A, COMPLEX → Tier B per models.yaml.
-  Defaults (local): A = mistral:7b, B = llama3.1:70b; provider switch needs
+  Defaults (local): A = mistral:7b, B = llama3.1:70b; Groq free tier:
+  A = llama-3.1-8b-instant, B = llama-3.3-70b-versatile (or
+  openai/gpt-oss-20b for its larger 200K/day token budget); provider switch needs
   no code change.
 FR-4.3: Router accuracy ≥80% against complexity labels in the golden set
   (ablation in eval report).
@@ -216,7 +172,9 @@ FR-7.1: Golden set Code/v2/eval/golden.jsonl — 80 questions: the
 FR-7.2: Code/v2/eval/run.py --mode v1|v2 --limit N → per-question answers,
   writing Code/v2/eval/reports/<ts>/report.json + report.md: hallucination
   rate, groundedness, citation precision/recall, avg $/query, router accuracy,
-  p50/p95 latency.
+  p50/p95 latency. The runner executes questions sequentially with a
+  configurable inter-request delay and exponential backoff on HTTP 429, so it
+  stays inside free-tier rate limits (e.g. Groq's per-minute/per-day caps).
 FR-7.3: Code/v2/eval/compare.py diffs two reports → SC-1/SC-2 verdicts.
 FR-7.4: 3 runs per mode, same seeds; report means. Judge prompts versioned
   in Code/v2/eval/prompts/, temp 0.
@@ -264,25 +222,15 @@ NFR-4: v1 files byte-identical (CI check: git diff on Code/query_phi.py
   etc. must be empty).
 10. Risks and mitigations
 Risk
-
 Mitigation
-
 70B local model too heavy for dev
-
 Ollama quantized default; price-table costing keeps benchmarks valid; API tiers for the final frozen run only
-
 Verifier judge bias
-
 strong-tier judge + 10% human spot-check + agreement report
-
 KG scripts bit-rotted
-
 Phase 0 inventories them; v2 degrades to dense-only if KG unusable, noted in README
-
 Golden-set leakage into tuning
-
 freeze hash before benchmark; any prompt change after freeze → re-run both modes
-
 11. Glossary
 Atomic claim: one verifiable factual statement extracted from a draft.
 v1 / v2: the original Group 21 pipeline vs this multi-agent extension.
