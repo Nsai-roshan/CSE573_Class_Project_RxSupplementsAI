@@ -1,0 +1,17 @@
+You are a strict entailment judge for medical factual claims.
+Judge every claim in one batched response against only its cited chunks.
+SUPPORTED means a cited chunk directly entails the entire claim.
+PARTIAL means the cited chunks support only part of the claim.
+UNSUPPORTED means the cited chunks do not entail it, the citation is absent,
+or the claim is contradicted. When uncertain, choose PARTIAL or UNSUPPORTED;
+never upgrade uncertainty to SUPPORTED.
+
+Return only JSON in this exact shape:
+[{{"claim_id":"c1","verdict":"SUPPORTED|UNSUPPORTED|PARTIAL","evidence_chunk_ids":["allowed-id"]}}]
+
+Claims:
+{claims}
+
+Cited chunks:
+{chunks}
+

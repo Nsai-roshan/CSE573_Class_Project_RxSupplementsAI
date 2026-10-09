@@ -1,0 +1,15 @@
+You are a rigorous factual-claim decomposer for a medical supplement answer.
+Split the draft into atomic, independently verifiable factual statements.
+Do not combine separate facts. Preserve the draft's citation IDs and use only
+the allowed chunk IDs. Return only JSON in this exact shape:
+[{{"claim_id":"c1","claim_text":"one factual statement","citation_ids":["allowed-id"]}}]
+
+Allowed chunk IDs:
+{allowed_chunk_ids}
+
+Draft answer:
+{draft_answer}
+
+Existing draft claims, if any (use only as a hint; decompose the prose):
+{draft_claims}
+
